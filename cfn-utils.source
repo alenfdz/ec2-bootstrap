@@ -1,0 +1,80 @@
+# Get operating system version based on the contents of /etc/*-release files, or return 1
+function td_get_ostype() {
+    local __retval=$1
+    FILES="/etc/*-release"
+    if [[ $(ls ${FILES}) ]]; then
+	OS=$( cat ${FILES} grep ^ID= | awk -F= '{print $2}' | tr -cd [:alpha:])
+        if [ "${OS}" == "ol" ];then
+            OS="rhel"
+        fi
+        if [ $? -eq 0 ] && [ "$__retval" ];then
+            eval $__retval="${OS}"
+            return 0
+        elif [ $OS ]; then
+            echo $OS
+            return 0;
+        else
+             echo "Unknown"
+        fi
+    else
+        if [ "$__retval" ]; then
+                __retval="Unknown"
+                return 1
+        else
+                echo "Unknown"
+                return 1;
+        fi
+    fi
+}
+
+# Get the operating system version based on the contents of /etc/*-release, or return 1
+function td_get_osversion () {
+    local __retval=$1
+    FILES="/etc/*-release"
+    if [[ $(ls ${FILES})  ]]; then
+        OSLEVEL=$(cat ${FILES} | grep VERSION_ID | tr -d \" | awk -F= '{print $2}')
+
+        if [ $? -eq 0 ] && [ "$__retval" ];then
+            eval $__retval="${OSLEVEL}"
+            return 0
+        elif [ $OS ]; then
+            echo $OSLEVEL
+            return 0;
+        else
+            echo "Unknown"
+        fi
+    else
+        if [ "$__retval" ]; then
+            __retval="Unknown"
+            return 1
+        else
+            echo "Unknown"
+            return 1;
+        fi
+    fi
+}
+
+# Update the operating system based on the type and release
+# exit  code 1
+function td_updateos() {
+    # Get operating system type
+    td_get_ostype INSTANCE_OSTYPE
+
+    echo "[INFO] Start OS Updates"
+    if [ "$INSTANCE_OSTYPE" == "amzn" ]; then
+        yum update -y
+    elif [ "$INSTANCE_OSTYPE" == "ubuntu" ]; then
+        apt update -y
+    elif [ "$INSTANCE_OSTYPE" == "rhel" ]; then
+        yum update -y
+    elif [ "$INSTANCE_OSTYPE" == "centos" ]; then
+        yum update -y
+    elif [ "$INSTANCE_OSTYPE" == "fedora" ]; then
+        dnf update -y
+    elif [ "$INSTANCE_OSTYPE" == "sles" ]; then
+        zypper -n refresh && zypper -n update
+    else
+        exit 1
+    fi
+    echo "[INFO] Finished OS Updates"
+}
