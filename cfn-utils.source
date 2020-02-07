@@ -20,6 +20,13 @@ function td_cfn_install(){
                 sudo apt-get update -y
                 sudo apt-get install python2.7 python-pip -y
                 sudo pip2 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+        elif [ "$INSTANCE_OSTYPE" == "sles" ]; then
+            zypper -n refresh && zypper -n update
+            zypper -n install python2-pip
+            pip2.7 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+        elif [ "$INSTANCE_OSTYPE" == "centos" ]; then
+            yum update -y
+            pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
         else
                 exit 1
         fi
