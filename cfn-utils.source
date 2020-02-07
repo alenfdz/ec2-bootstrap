@@ -1,14 +1,32 @@
+# Install cfn tools based on the operating system type
+function td_cfn_install(){
+        td_get_ostype OSTYPE
+        td_get_osversion OSVERSION
+
+        echo "[Installing aws-cfn-bootstrap]"
+        if [  "$OSTYPE" == 'amzn' ] && [ "$OSVERSION" == "2" ]; then
+                sudo yum install -y aws-cfn-bootstrap
+                sudo yum install -y python3-pip
+                export PATH=$PATH:/opt/aws/bin
+        elif [ "$OSTYPE" == 'amzn' ]; then
+                sudo yum install -y aws-cfn-bootstrap
+                sudo yum install -y python3-pip
+                export PATH=$PATH:/opt/aws/bin
+        else
+                exit 1
+        fi
+}
+
 # Get operating system version based on the contents of /etc/*-release files, or return 1
 function td_get_ostype() {
-    local __retval=$1
     FILES="/etc/*-release"
     if [[ $(ls ${FILES}) ]]; then
-	OS=$( cat ${FILES} grep ^ID= | awk -F= '{print $2}' | tr -cd [:alpha:])
+        OS=$( cat ${FILES} | grep ^ID= | awk -F= '{print $2}' | tr -cd [:alpha:])
         if [ "${OS}" == "ol" ];then
             OS="rhel"
         fi
-        if [ $? -eq 0 ] && [ "$__retval" ];then
-            eval $__retval="${OS}"
+        if [ $? -eq 0 ];then
+            eval $1="${OS}"
             return 0
         elif [ $OS ]; then
             echo $OS
@@ -17,40 +35,27 @@ function td_get_ostype() {
              echo "Unknown"
         fi
     else
-        if [ "$__retval" ]; then
-                __retval="Unknown"
-                return 1
-        else
-                echo "Unknown"
-                return 1;
-        fi
+        $1="Unknown"
+        return 1
     fi
 }
 
 # Get the operating system version based on the contents of /etc/*-release, or return 1
 function td_get_osversion () {
-    local __retval=$1
     FILES="/etc/*-release"
     if [[ $(ls ${FILES})  ]]; then
         OSLEVEL=$(cat ${FILES} | grep VERSION_ID | tr -d \" | awk -F= '{print $2}')
 
-        if [ $? -eq 0 ] && [ "$__retval" ];then
-            eval $__retval="${OSLEVEL}"
+        if [ $? -eq 0 ] ;then
+            eval $1="${OSLEVEL}"
             return 0
-        elif [ $OS ]; then
-            echo $OSLEVEL
-            return 0;
         else
-            echo "Unknown"
+            $1="Unknown"
+            return 1
         fi
     else
-        if [ "$__retval" ]; then
-            __retval="Unknown"
-            return 1
-        else
-            echo "Unknown"
-            return 1;
-        fi
+        $1="Unknown"
+        return 1;
     fi
 }
 
@@ -58,23 +63,24 @@ function td_get_osversion () {
 # exit  code 1
 function td_updateos() {
     # Get operating system type
-    td_get_ostype INSTANCE_OSTYPE
+    td_get_ostype OSTYPE
 
     echo "[INFO] Start OS Updates"
-    if [ "$INSTANCE_OSTYPE" == "amzn" ]; then
+    if [ "$OSTYPE" == "amzn" ]; then
         yum update -y
-    elif [ "$INSTANCE_OSTYPE" == "ubuntu" ]; then
-        apt update -y
-    elif [ "$INSTANCE_OSTYPE" == "rhel" ]; then
+    elif [ "$OSTYPE" == "ubuntu" ]; then
+          apt update -y
+    elif [ "$OSTYPE" == "rhel" ]; then
         yum update -y
-    elif [ "$INSTANCE_OSTYPE" == "centos" ]; then
+    elif [ "$OSTYPE" == "centos" ]; then
         yum update -y
-    elif [ "$INSTANCE_OSTYPE" == "fedora" ]; then
+    elif [ "$OSTYPE" == "fedora" ]; then
         dnf update -y
-    elif [ "$INSTANCE_OSTYPE" == "sles" ]; then
+    elif [ "$OSTYPE" == "sles" ]; then
         zypper -n refresh && zypper -n update
     else
         exit 1
     fi
-    echo "[INFO] Finished OS Updates"
+    echo "[INFO] OS Updated"
 }
+  
