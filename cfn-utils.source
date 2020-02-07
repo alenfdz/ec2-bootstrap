@@ -1,3 +1,29 @@
+# Install and run Cloudwatch agent on the different platforms
+function td_cloudwatch_install(){
+    td_get_ostype OSTYPE
+    td_get_osversion OSVERSION
+
+    if [ "$OSTYPE" == 'amzn' ]; then
+        wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+        sudo rpm -U ./amazon-cloudwatch-agent.rpm
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/etc/amazon/amazon-cloudwatch-agent.json -s
+    elif [ "$OSTYPE" == "sles" ]; then
+        wget https://s3.amazonaws.com/amazoncloudwatch-agent/suse/amd64/latest/amazon-cloudwatch-agent.rpm
+        sudo rpm -U ./amazon-cloudwatch-agent.rpm
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/etc/amazon/amazon-cloudwatch-agent.json -s        
+    elif [ "$OSTYPE" == "centos" ]; then
+        wget https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm
+        sudo rpm -U ./amazon-cloudwatch-agent.rpm
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/etc/amazon/amazon-cloudwatch-agent.json -s
+    elif [ "$OSTYPE" == "ubuntu" ]; then
+        wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/etc/amazon/amazon-cloudwatch-agent.json -s
+    else
+        exit 1
+    fi
+}
+
 # Install cfn tools based on the operating system type
 function td_cfn_install(){
         td_get_ostype OSTYPE
@@ -26,6 +52,8 @@ function td_cfn_install(){
                 pip2.7 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
         elif [ "$OSTYPE" == "centos" ]; then
                 yum update -y
+                yum install -y epel-release
+                yum install -y python-pip   
                 pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
         else
                 exit 1
